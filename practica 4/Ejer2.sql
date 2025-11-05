@@ -46,3 +46,56 @@ FROM Arbol a
 INNER JOIN Localidad l ON (a.codigoPostal = l.codigoPostal)
 INNER JOIN Poda p ON (a.nroArbol = p.nroArbol)
 WHERE YEAR(p.fecha) = 2023)
+
+/*
+5) Reportar DNI, nombre, apellido, fecha de nacimiento y localidad donde viven de aquellos
+podadores con apellido terminado con el string ‘ata’ y que tengan al menos una poda durante
+2024. Ordenar por apellido y nombre
+*/
+
+SELECT podador.DNI, podador.nombre, podador.apellido, podador.fnac, l.nombreL
+FROM Podador podador 
+INNER JOIN Localidad l ON (podador.codigoPostalVive = l.codigoPostal)
+WHERE podador.apellido LIKE "%ata" 
+AND podador.DNI IN (
+    SELECT poda.DNI
+    FROM Poda poda
+    WHERE YEAR(poda.fecha) = 2024
+)
+
+/* 6) Listar DNI, apellido, nombre, teléfono y fecha de nacimiento de podadores que solo podaron
+árboles de especie ‘Coníferas’.
+*/
+SELECT podador.DNI, podador.nombre, podador.apellido, podador.fnac
+FROM Podador podador 
+INNER JOIN Poda poda ON (podador.DNI = poda.DNI)
+INNER JOIN Arbol a ON (a.nroArbol = poda.nroArbol)
+WHERE a.especie = "Coniferas"
+EXCEPT
+SELECT podador.DNI, podador.nombre, podador.apellido, podador.fnac
+FROM Podador podador2 
+INNER JOIN Poda poda2 ON (podador.DNI = poda.DNI)
+INNER JOIN Arbol a2 ON (a.nroArbol = poda.nroArbol)
+WHERE a2.especie <> "Coniferas"
+
+/*7) Listar especies de árboles que se encuentren en la localidad de ‘La Plata’ y también en la
+localidad de ‘Salta’.*/
+SELECT a.especie
+FROM Arbol a INNER JOIN Localidad l ON (a.codigoPostal = l.codigoPostal)
+WHERE (l.nombreL = "La Plata")
+INTERSECT
+SELECT a.especie
+FROM Arbol a INNER JOIN Localidad l ON (a.codigoPostal = l.codigoPostal)
+WHERE (l.nombreL = "Salta")
+/*TAMBIEN LO PODES HACER CON UN 'AND A2.ESPECIE IN' Y CONSULTAS POR LA OTRA LOCALIDAD EN SUBCONSULTA */
+
+/*8) Eliminar el podador con DNI 22234566*/
+DELETE FROM Podador WHERE DNI = 222234566
+
+/*9) Reportar nombre, descripción y cantidad de habitantes de localidades que tengan menos de 5
+árboles.*/
+SELECT l.nombreL, l.descripcion, l.nroHabitantes, COUNT(a.nroArbol) as cantArboles
+FROM Localidad l 
+INNER JOIN Arbol a ON (l.codigoPostal = a.codigoPostal)
+GROUP BY l.codigoPostal
+HAVING COUNT(a.nroArbol) < 5
